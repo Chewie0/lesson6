@@ -1,17 +1,16 @@
 FROM maven:3.6.1-jdk-8 as maven_builder
-RUN apt-get update \        
-     apt-get install -y git
-RUN mkdir /home/sampleTest \      
-    cd /home/sampleTest \        
-    git clone https://github.com/koddas/war-web-project.git
-WORKDIR /home/sampleTest
+WORKDIR /test
+RUN apt-get install -y git
+RUN git clone https://github.com/koddas/war-web-project.git /test
+RUN mvn  -f pom.xml package
+#RUN mkdir -p /test2
+#WORKDIR /test/target
+RUN ls
+#RUN cp wwp-1.0.0.war ../../test2
+#WORKDIR ../../test2
 
+RUN ls
+FROM tomcat:8.5.43-jdk8
+EXPOSE 8080
 
-ENV HOME=/home/sampleTest
-ADD pom.xml $HOME
-RUN ["/usr/local/bin/mvn-entrypoint.sh", "mvn", "verify", "clean", "--fail-never"]
-
-ADD . $HOME
-
-RUN ["mvn","clean","install","-T","2C","-DskipTests=true"]
-
+COPY --from=maven_builder  /test/target/wwp-1.0.0.war /usr/local/tomcat/webapps
